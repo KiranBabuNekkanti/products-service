@@ -1,0 +1,27 @@
+server:
+  port: 8000
+  servlet:
+    context-path: /products-service
+
+spring:
+  application:
+    name: products-service
+  datasource:
+    url: ${products-service-config.db-url}
+    username: ${products-service-secret-config.db-username}
+    password: ${products-service-secret-config.db-password}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      naming-strategy: org.hibernate.cfg.ImprovedNamingStrategy
+     # ddl-auto: update
+    properties:
+      hibernate:
+        default_schema: products
+        show-sql: true
+        format_sql: true
+        use_sql_comments: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+
+

@@ -1,0 +1,7 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gcp-storage-class
+provisioner: kubernetes.io/gce-pd
+reclaimPolicy: Retain   # Retain or Delete
+allowVolumeExpansion: true
