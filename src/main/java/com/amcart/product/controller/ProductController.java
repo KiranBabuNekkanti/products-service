@@ -1,8 +1,6 @@
 package com.amcart.product.controller;
 
-import com.amcart.product.dto.Category;
 import com.amcart.product.dto.Product;
-import com.amcart.product.model.CategoryHierarchy;
 import com.amcart.product.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = {"http://localhost:3000", "https://localhost:3000"})
 @RestController
 @RequiredArgsConstructor
 public class ProductController {
@@ -28,12 +26,14 @@ public class ProductController {
     private final ProductService productService;
 
     @GetMapping(value = "/products")
-    public ResponseEntity<Page<Product>> getProducts(@PageableDefault Pageable pageable, @RequestParam(name = "searchText", required = false) String searchText){
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(productService.getProducts(pageable, searchText));
+    public ResponseEntity<Page<Product>> getProducts(@PageableDefault Pageable pageable,
+                                                     @RequestParam(name = "searchText", required = false) String searchText,
+                                                     @RequestParam(name = "categoryIds", required = false) List<Long> categoryIds){
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(productService.getProducts(pageable, searchText, categoryIds));
     }
 
-    @GetMapping(value = "/categories")
-    public ResponseEntity<List<CategoryHierarchy>> getProductCategories(){
+    @GetMapping(value = "/categories", produces = {"application/json"})
+    public ResponseEntity<String> getProductCategories(){
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(productService.getProductCategory());
     }
 

@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: gcp-disk-pvc
+  name: aws-disk-pvc
   namespace: kiran-nagp-ns
 spec:
   accessModes:
@@ -9,7 +9,7 @@ spec:
   resources:
     requests:
       storage: 2Gi
-  storageClassName: gcp-storage-class
+  storageClassName: aws-storage-class
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -39,7 +39,7 @@ spec:
             - secretRef:
                 name: products-service-secret-config
           volumeMounts:
-            - name: gcp-disk-pvc
+            - name: aws-disk-pvc
               mountPath: /var/lib/postgresql/data
           resources:
             requests:
@@ -49,9 +49,9 @@ spec:
               memory: "256Mi"
               cpu: "500m"
       volumes:
-        - name: gcp-disk-pvc
+        - name: aws-disk-pvc
           persistentVolumeClaim:
-            claimName: gcp-disk-pvc
+            claimName: aws-disk-pvc
 ---
 apiVersion: v1
 kind: Service
