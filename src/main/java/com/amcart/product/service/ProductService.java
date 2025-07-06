@@ -31,11 +31,27 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
 
     public Page<Product> getProducts(Pageable pageable, String searchText, List<Long> categoryIds) {
+        // Validate pageable (optional: add max page size limit)
+        if (pageable == null) {
+            throw new IllegalArgumentException("Pageable must not be null");
+        }
+        // Validate searchText (optional: sanitize input)
+        if (searchText != null && searchText.length() > 255) {
+            throw new IllegalArgumentException("Search text too long");
+        }
+        // Validate categoryIds size (prevent DoS)
+        if (categoryIds != null && categoryIds.size() > 100) {
+            throw new IllegalArgumentException("Too many category IDs");
+        }
         if (ObjectUtils.isEmpty(searchText) && ObjectUtils.isEmpty(categoryIds))
             return productRepository.findAll(pageable);
-        searchText = ObjectUtils.isEmpty(searchText) ? null : ("%" + searchText + "%");
-        Set<Long> subCategoryIds = ObjectUtils.isEmpty(categoryIds) ? null : categoryRepository.getSubCategoryIds(categoryIds);
-        if(!ObjectUtils.isEmpty(categoryIds)){
+        searchText = ObjectUtils.isEmpty(searchText) ? null : ("%" + searchText.replace("%", "\\%") + "%");
+        Set<Long> subCategoryIds = null;
+        if (!ObjectUtils.isEmpty(categoryIds)) {
+            subCategoryIds = categoryRepository.getSubCategoryIds(categoryIds);
+            if (subCategoryIds == null) {
+                subCategoryIds = new java.util.HashSet<>();
+            }
             subCategoryIds.addAll(categoryIds);
             categoryIds = subCategoryIds.stream().toList();
         }
@@ -43,13 +59,24 @@ public class ProductService {
     }
 
     public Product getProductDetails(String uuid) {
-        Product product = productRepository.findById(UUID.fromString(uuid)).orElseThrow(() -> new NoSuchElementException("Product not found"));
-        product.setCategory(categoryRepository.findById(product.getCategoryId()).orElse(null));
-        return product;
+        try {
+            UUID productUuid = UUID.fromString(uuid);
+            Product product = productRepository.findById(productUuid)
+                    .orElseThrow(() -> new NoSuchElementException("Product not found"));
+            if (product.getCategoryId() != null) {
+                product.setCategory(categoryRepository.findById(product.getCategoryId()).orElse(null));
+            }
+            return product;
+        } catch (IllegalArgumentException e) {
+            throw new NoSuchElementException("Invalid product UUID");
+        }
     }
 
     public String getProductCategory() {
         List<CategoryHierarchyView> categoryHierarchyViews = categoryRepository.getCategoryHierarchy();
+        if (categoryHierarchyViews == null) {
+            categoryHierarchyViews = java.util.Collections.emptyList();
+        }
         List<CategoryHierarchy> categoryHierarchies = categoryHierarchyViews.stream().map(CategoryHierarchy::toCategoryHierarchy).collect(Collectors.toList());
         JsonObject object = buildCategoryTree(categoryHierarchies);
         return object.toString();
